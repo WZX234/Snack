@@ -61,6 +61,8 @@ int last_dir;              //previous direction
 snack_body snack[16][32];  //snack body
 where head, tail;          //snack head and tail
 int loop_count = 0;        //initialize loop count
+int best_score = 0;        //the best score
+FILE * fp;                 //file pointer for saving game data
 
 int main (void)
 {
@@ -157,8 +159,9 @@ int main (void)
 void init (void)
 {
 	fputs("\033[?25l\033[2J", stdout);//initialize the console cursor to be invisible and clear the screen
-	snack_len = 3; //initialize the length of the snack
-	last_dir = UP; //initialize the previous direction
+	loop_count = 0; //initialize the loop count
+	snack_len = 3;  //initialize the length of the snack
+	last_dir = UP;  //initialize the previous direction
 	head.x = 10; head.y = 16; //initialize the head position
 	tail.x = 12; tail.y = 16; //initialize the tail position
 
@@ -172,6 +175,16 @@ void init (void)
 	srand((unsigned int)time(NULL));
 	for (int i = 0; i < FOODS; i++)
 		span_food();
+
+	//read the best score from the file
+	fp = fopen("snack.dat", "r");      //open the file for reading
+	if (fp != NULL)
+	{
+		fscanf(fp, "%d", &best_score); //read the best score from the file
+		fclose(fp);                    //close the file
+	}
+	else
+		best_score = 0;                //if the file does not exist, set the best score to 0
 
 	//redraw the screen
 	redr_screen();
@@ -328,15 +341,22 @@ void redr_screen (void)
 
 	//clear the buffer and prepare to redraw the screen
 	buffer[0] = 0;
-	//convert the length of the snack to a string and append it to the buffer
+	
 	char snack_len_format[5];
-	sprintf(snack_len_format, "%d", snack_len); //convert the length of the snack to a string
+	sprintf(snack_len_format, "%d", snack_len);   //convert the length of the snack to a string
+	strcat(buffer, "\033[94m SNACK: ");           //append the string " SNACK: " to the buffer
+	strcat(buffer, snack_len_format);             //append the length of the snack to the buffer
+	
 	char loop_count_format[5];
 	sprintf(loop_count_format, "%d", loop_count); //convert the loop count to a string
-	strcat(buffer, "\033[94m SNACK: "); //append the string " SNACK: " to the buffer
-	strcat(buffer, snack_len_format); //append the length of the snack to the buffer
-	strcat(buffer, "\033[94m  TIMES: "); //append the string " TIMES: " to the buffer
-	strcat(buffer, loop_count_format); //append the loop count to the buffer
+	strcat(buffer, "\033[94m  TIMES: ");          //append the string " TIMES: " to the buffer
+	strcat(buffer, loop_count_format);            //append the loop count to the buffer
+
+	char best_score_format[5];
+	sprintf(best_score_format, "%d", best_score); //convert the best score to a string
+	strcat(buffer, "\033[94m  BEST: ");           //append the string " BEST: " to the buffer
+	strcat(buffer, best_score_format);            //append the best score to the buffer
+
 	//draw the snack and food on the screen
 	strcat(buffer, "\n\033[91mDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD\n");
 	for(int i = 0; i < 16; i++)
@@ -352,7 +372,7 @@ void redr_screen (void)
 				case(SNACK): //if the position is occupied by the snack, append "@" to the buffer
 					strcat(buffer, "\033[32m@");
 					break;
-				case(FOOD): //if the position is occupied by food, append "$" to the buffer
+				case(FOOD):  //if the position is occupied by food, append "$" to the buffer
 					strcat(buffer, "\033[33m$");
 					break;
 				default:
@@ -374,6 +394,19 @@ int cont_play (void)
 	//make the console cursor visible again
 	fputs("\033[?25h", stdout);
 
+	//if the current snack length is greater than the best score, update the best score and save it to a file
+	if (snack_len > best_score)
+	{
+		puts("New best score!");
+		best_score = snack_len;            //update the best score
+		fp = fopen("snack.dat", "w");      //open the file for writing
+		if (fp != NULL)
+		{
+			fprintf(fp, "%d", best_score); //write the best score to the file
+			fclose(fp);                    //close the file
+		}
+	}
+	
 	//ask the player if they want to continue playing
 	puts("Play again ? (y/n):");
 	//wait for the player to press a key
