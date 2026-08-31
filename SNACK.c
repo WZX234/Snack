@@ -29,7 +29,6 @@ typedef struct
 	unsigned int y: 5;
 }where;
 
-int drct_2;
 int slong;
 char buffer[643];
 int mem_drct;
@@ -159,7 +158,7 @@ int run (int tdrct)
 			putchar('1');
 			exit(1);
 	}
-	if ( (snack[head.x][head.y].about == 1  &&  head.x != tear.x  &&  head.y != tear.y) || head.x - hx == 15 || hx - head.x == 15 || head.y - hy == 31 || hy - head.y == 31)
+	if ( (snack[head.x][head.y].about == 1  &&  ( head.x != tear.x  ||  head.y != tear.y ) ) || head.x - hx == 15 || hx - head.x == 15 || head.y - hy == 31 || hy - head.y == 31)
     {
     	puts("GAME OVER");
     	return 4;
