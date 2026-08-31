@@ -22,9 +22,9 @@ int  cont_play   (void)     ;    //continue playing ?
 //===========================type definitions===================================
 enum //snack state
 {
-	WELL = 0,
-	GETED,
-	OVER = 4
+	WELL  = 0,
+	GETED = 1,
+	OVER  = 4
 };
 
 enum //snack direction
@@ -44,22 +44,23 @@ enum //snack type
 
 typedef struct //snack body
 {
-	unsigned int about: 2;  //about: 0-null, 1-snack, 2-food
-	unsigned int dir  : 2;  //direction: 0-up, 1-right, 2-down, 3-left
+	unsigned int about : 2;  //about: 0-null, 1-snack, 2-food
+	unsigned int dir   : 2;  //direction: 0-up, 1-right, 2-down, 3-left
 }snack_body;
 
 typedef struct //snack head and tail
 {
-	unsigned int x: 4;  //x coordinate
-	unsigned int y: 5;  //y coordinate
+	unsigned int x : 4;  //x coordinate
+	unsigned int y : 5;  //y coordinate
 }where;
 
 //===========================global variables===================================
 int snack_len;             //length of snack
-char buffer[6144];          //screen buffer
+char buffer[6144];         //screen buffer
 int last_dir;              //previous direction
 snack_body snack[16][32];  //snack body
 where head, tail;          //snack head and tail
+int loop_count = 0;        //initialize loop count
 
 int main (void)
 {
@@ -80,13 +81,10 @@ int main (void)
 	int shack_state, next_dir;
 	_init: //label for re-initialization
 		init(); //initialize the game
-
 //===========================main game loop===================================
-		int sleep_time;
 		while(snack_len < 512)  //run until the snack length reaches 512
 		{
-			sleep_time = SLEEP_TIME - snack_len * DIFFI;  //calculate the sleep time based on the snack length
-			Sleep(sleep_time > 10 ? sleep_time : 10);     //sleep for a while
+			Sleep(SLEEP_TIME - snack_len * DIFFI);     //sleep for a while
 
 			process_input:
 				switch(get_dir())   //process the input direction
@@ -145,6 +143,7 @@ int main (void)
 				//if the snack has eaten food, play a sound
 				if (shack_state == GETED)
 					putchar('\a');
+			loop_count++;
 		}
 		puts("YOU WIN! ");
 		//if the player wants to continue playing, re-initialize the game
@@ -332,8 +331,12 @@ void redr_screen (void)
 	//convert the length of the snack to a string and append it to the buffer
 	char snack_len_format[5];
 	sprintf(snack_len_format, "%d", snack_len); //convert the length of the snack to a string
+	char loop_count_format[5];
+	sprintf(loop_count_format, "%d", loop_count); //convert the loop count to a string
 	strcat(buffer, "\033[94m SNACK: "); //append the string " SNACK: " to the buffer
 	strcat(buffer, snack_len_format); //append the length of the snack to the buffer
+	strcat(buffer, "\033[94m  TIMES: "); //append the string " TIMES: " to the buffer
+	strcat(buffer, loop_count_format); //append the loop count to the buffer
 	//draw the snack and food on the screen
 	strcat(buffer, "\n\033[91mDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD\n");
 	for(int i = 0; i < 16; i++)
