@@ -8,6 +8,7 @@
 //===========================macro definitions===================================
 #define FOODS 16        //quantity of food
 #define SLEEP_TIME 300  //pause time
+#define DIFFI 0.85      //difficulty level
 
 //===========================function declarations===================================
 void init        (void)     ;    //initialize the game
@@ -55,7 +56,7 @@ typedef struct //snack head and tail
 
 //===========================global variables===================================
 int snack_len;             //length of snack
-char buffer[643];          //screen buffer
+char buffer[6144];          //screen buffer
 int last_dir;              //previous direction
 snack_body snack[16][32];  //snack body
 where head, tail;          //snack head and tail
@@ -63,11 +64,11 @@ where head, tail;          //snack head and tail
 int main (void)
 {
 	//welcome screen
-	puts("=================================");
-	puts("|| This is a game called SNACK ||");
-	puts("=================================");
-	puts("\nControl:");
-	puts(" W : up\n A : left\n S : down\n D : right");
+	puts("\033[93m=================================\033[0m");
+	puts("\033[93m|| This is a game called SNACK ||\033[0m");
+	puts("\033[93m=================================\033[0m");
+	puts("\n\033[33mControl:\033[0m");
+	puts("\033[33m   W   : up\n   A   : left\n   S   : down\n   D   : right\n SPACE : pause\n\033[0m");
 	puts("\nPress any key to start:");
 
 	//wait for key press
@@ -84,48 +85,65 @@ int main (void)
 
 		while(snack_len < 512)  //run until the snack length reaches 512
 		{
-			Sleep(SLEEP_TIME);  //sleep for a while
-			switch(get_dir())   //process the input direction
-			{
-				case('W'):
-				case('w'):
-					next_dir = UP;
-					break;
-				case('S'):
-				case('s'):
-					next_dir = DOWN;
-					break;
-				case('A'):
-				case('a'):
-					next_dir = LEFT;
-					break;
-				case('D'):
-				case('d'):
-					next_dir = RIGHT;
-					break;
-				default:
-					next_dir = last_dir;
-					break;
-			}
-			
-			//prevent the snack from moving in the opposite direction
-			if (opp_dir(next_dir) == last_dir)
-			    next_dir = last_dir;
-			shack_state = run(next_dir);
+			Sleep(SLEEP_TIME - snack_len * DIFFI);  //sleep for a while
 
-			//check the state of the snack
-			if (shack_state == OVER)
-			{
-				//if the player wants to continue playing, re-initialize the game
-				if (cont_play())
-					goto _init;
-				//else, exit the game
-				return 0; 
-			}
-			redr_screen();
-			//if the snack has eaten food, play a sound
-			if (shack_state == GETED)
-				putchar('\a');
+			process_input:
+				switch(get_dir())   //process the input direction
+				{
+					case('W'):
+					case('w'):
+						next_dir = UP;
+						break;
+					case('S'):
+					case('s'):
+						next_dir = DOWN;
+						break;
+					case('A'):
+					case('a'):
+						next_dir = LEFT;
+						break;
+					case('D'):
+					case('d'):
+						next_dir = RIGHT;
+						break;
+					case(' '):
+						//pause the game until a key is pressed
+						while (kbhit())
+						{
+							getch();
+						    Sleep(100);
+						}
+						while (!kbhit())
+						    Sleep(100);
+						while (kbhit())
+						{
+							getch();
+						    Sleep(100);
+						}
+						goto process_input;
+					default:
+						next_dir = last_dir;
+						break;
+				}
+				
+				//prevent the snack from moving in the opposite direction
+				if (opp_dir(next_dir) == last_dir)
+				    next_dir = last_dir;
+				shack_state = run(next_dir);
+
+				//check the state of the snack
+				if (shack_state == OVER)
+				{
+					//if the player wants to continue playing, re-initialize the game
+					if (cont_play())
+						goto _init;
+					//else, exit the game
+					return 0; 
+				}
+				redr_screen();
+				//if the snack has eaten food, play a sound
+				if (shack_state == GETED)
+					putchar('\a');
 		}
 		puts("YOU WIN! ");
 		//if the player wants to continue playing, re-initialize the game
@@ -138,7 +156,7 @@ int main (void)
 //===========================function definitions===================================
 void init (void)
 {
-	system("cls"); //clear the screen
+	fputs("\033[?25l\033[2J", stdout);//initialize the console cursor to be invisible and clear the screen
 	snack_len = 3; //initialize the length of the snack
 	last_dir = UP; //initialize the previous direction
 	head.x = 10; head.y = 16; //initialize the head position
@@ -208,7 +226,7 @@ int run (int dir)
 			head.y--;
 			break;
 		default:
-			putchar('E1');
+			puts("E1");
 			exit(1);
 	}
 
@@ -251,7 +269,7 @@ int run (int dir)
 				break;
 			default:
 				//if the direction is invalid, print an error message and exit
-				putchar('E2');
+				puts("E2");
 				exit(1);
 		}
 	}
@@ -276,7 +294,7 @@ int run (int dir)
 				break;
 			default:
 				//if the direction is invalid, print an error message and exit
-				putchar('E3');
+				puts("E3");
 				exit(1);
 		}
 	}
@@ -298,7 +316,7 @@ int opp_dir (int dir)
 			return RIGHT;
 		default:
 		    //if the direction is invalid, print an error message and exit
-			putchar('E4');
+			puts("E4");
 			exit(1);
 	}
 }
@@ -306,21 +324,20 @@ int opp_dir (int dir)
 void redr_screen (void)
 {
 	//move the cursor to the top-left corner of the console window
-	COORD pos = {0, 0};
-	SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
+	fputs("\033[H", stdout);
 
 	//clear the buffer and prepare to redraw the screen
 	buffer[0] = 0;
 	//convert the length of the snack to a string and append it to the buffer
 	char snack_len_format[5];
 	sprintf(snack_len_format, "%d", snack_len); //convert the length of the snack to a string
-	strcat(buffer, " SNACK: "); //append the string " SNACK: " to the buffer
+	strcat(buffer, "\033[94m SNACK: "); //append the string " SNACK: " to the buffer
 	strcat(buffer, snack_len_format); //append the length of the snack to the buffer
 	//draw the snack and food on the screen
-	strcat(buffer, "\nDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD\n");
+	strcat(buffer, "\n\033[91mDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD\n");
 	for(int i = 0; i < 16; i++)
 	{
-		strcat(buffer, "D");
+		strcat(buffer, "\033[91mD");
 		for(int j = 0; j < 32; j++)
 		{
 			switch(snack[i][j].about)
@@ -329,20 +346,20 @@ void redr_screen (void)
 					strcat(buffer, " ");
 					break;
 				case(SNACK): //if the position is occupied by the snack, append "@" to the buffer
-					strcat(buffer, "@");
+					strcat(buffer, "\033[32m@");
 					break;
 				case(FOOD): //if the position is occupied by food, append "$" to the buffer
-					strcat(buffer, "$");
+					strcat(buffer, "\033[33m$");
 					break;
 				default:
 					//if the position is invalid, print an error message and exit
-					putchar('E5');
+					puts("E5");
 					exit(1);
 			}
 		}
-		strcat(buffer, "D\n");
+		strcat(buffer, "\033[91mD\n");
 	}
-	strcat(buffer, "DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD\n");
+	strcat(buffer, "\033[91mDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD\033[0m\n");
 	//print the buffer to the console and flush the output
 	printf("%s", buffer);
 	fflush(stdout);
@@ -350,6 +367,9 @@ void redr_screen (void)
 
 int cont_play (void)
 {
+	//make the console cursor visible again
+	fputs("\033[?25h", stdout);
+
 	//ask the player if they want to continue playing
 	puts("Play again ? (y/n):");
 	//wait for the player to press a key
