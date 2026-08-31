@@ -8,7 +8,7 @@
 //===========================macro definitions===================================
 #define FOODS 16        //quantity of food
 #define SLEEP_TIME 300  //pause time
-#define DIFFI 0.85      //difficulty level
+#define DIFFI 0.5       //difficulty level
 
 //===========================function declarations===================================
 void init        (void)     ;    //initialize the game
