@@ -159,7 +159,7 @@ int run (int tdrct)
 			putchar('1');
 			exit(1);
 	}
-	if (snack[head.x][head.y].about == 1 || head.x - hx == 15 || hx - head.x == 15 || head.y - hy == 31 || hy - head.y == 31)
+	if ( (snack[head.x][head.y].about == 1  &&  head.x != tear.x  &&  head.y != tear.y) || head.x - hx == 15 || hx - head.x == 15 || head.y - hy == 31 || hy - head.y == 31)
     {
     	puts("GAME OVER");
     	return 4;
@@ -171,10 +171,32 @@ int run (int tdrct)
 		ret = 1;
 		make_food();
 	}
-	else
+	else if (snack[head.x][head.y].about == 0)
 	{
 		snack[head.x][head.y].about = 1;
 		snack[tear.x][tear.y].about = 0;
+		switch(snack[tear.x][tear.y].drct)
+		{
+			case(0):
+				tear.x--;
+				break;
+			case(1):
+				tear.y++;
+				break;
+			case(2):
+				tear.x++;
+				break;
+			case(3):
+				tear.y--;
+				break;
+			default:
+				putchar('2');
+				exit(1);
+		}
+	}
+	else
+	{
+		snack[head.x][head.y].about = 1;
 		switch(snack[tear.x][tear.y].drct)
 		{
 			case(0):
