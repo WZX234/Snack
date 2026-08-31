@@ -3,7 +3,7 @@
 #include <conio.h>   //for getch() and kbhit()
 #include <stdlib.h>  //for rand(), system(), exit() and srand()
 #include <string.h>  //for strcat() and sprintf()
-#include <windows.h> //for Sleep(), SetConsoleCursorPosition() and GetStdHandle()
+#include <windows.h> //for Sleep()
 
 //===========================macro definitions===================================
 #define FOODS 16        //quantity of food
@@ -85,7 +85,7 @@ int main (void)
 
 		while(snack_len < 512)  //run until the snack length reaches 512
 		{
-			Sleep(SLEEP_TIME - snack_len * DIFFI);  //sleep for a while
+			Sleep((int)(SLEEP_TIME - snack_len * DIFFI));  //sleep for a while
 
 			process_input:
 				switch(get_dir())   //process the input direction
