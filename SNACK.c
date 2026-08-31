@@ -82,10 +82,11 @@ int main (void)
 		init(); //initialize the game
 
 //===========================main game loop===================================
-
+		int sleep_time;
 		while(snack_len < 512)  //run until the snack length reaches 512
 		{
-			Sleep((int)(SLEEP_TIME - snack_len * DIFFI));  //sleep for a while
+			sleep_time = SLEEP_TIME - snack_len * DIFFI;  //calculate the sleep time based on the snack length
+			Sleep(sleep_time > 10 ? sleep_time : 10);     //sleep for a while
 
 			process_input:
 				switch(get_dir())   //process the input direction
