@@ -54,8 +54,8 @@ typedef struct //snack body
 
 typedef struct //snack head and tail
 {
-	unsigned int x : 4 ;  //x coordinate
-	unsigned int y : 5 ;  //y coordinate
+	unsigned char x : 4 ;  //x coordinate
+	unsigned char y : 5 ;  //y coordinate
 }where;
 
 //===========================global variables===================================
