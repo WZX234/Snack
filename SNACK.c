@@ -219,8 +219,10 @@ void span_food (void)
 	
 	//if the position is valid, place food there
 	if (i < 1000)
+	{
 		snack[x][y].about = FOOD;
 		food_count++;
+	}
 
 	//if the snack length is less than 512 and there is no food on the screen, spawn food again
 	if (snack_len < 512 && food_count == 0)
