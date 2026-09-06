@@ -1,16 +1,18 @@
-#include <time.h>    //for srand()
-#include <stdio.h>   //for input and output
-#include <conio.h>   //for getch() and kbhit()
-#include <stdlib.h>  //for rand(), system(), exit() and srand()
-#include <string.h>  //for strcat() and sprintf()
-#include <windows.h> //for Sleep()
+#include <time.h>        //for srand()
+#include <stdio.h>       //for input and output
+#include <conio.h>       //for getch() and kbhit()
+#include <stdlib.h>      //for rand(), system(), exit() and srand()
+#include <string.h>      //for strcat() and sprintf()
+#include <windows.h>     //for Sleep()
 
 //===========================macro definitions===================================
-#define FOODS 16        //quantity of food
-#define SLEEP_TIME 300  //pause time
-#define DIFFI 0.5       //difficulty level
+
+#define FOODS       16   //quantity of food
+#define SLEEP_TIME  300  //pause time
+#define DIFFI       0.5  //difficulty level
 
 //===========================function declarations===================================
+
 void init        (void)     ;    //initialize the game
 void span_food   (void)     ;    //spawn food
 char get_dir     (void)     ;    //get the direction of snack
@@ -20,49 +22,52 @@ void redr_screen (void)     ;    //redraw screen
 int  cont_play   (void)     ;    //continue playing ?
 
 //===========================type definitions===================================
+
 enum //snack state
 {
-	WELL  = 0,
-	GETED = 1,
-	OVER  = 4
+	WELL     = 0,
+	DET_FOOD = 1,
+	OVER     = 4
 };
 
 enum //snack direction
 {
 	UP = 0,
-	RIGHT,
-	DOWN,
+	RIGHT ,
+	DOWN  ,
 	LEFT
 };
 
 enum //snack type
 {
 	NULL_ = 0,
-	SNACK,
+	SNACK ,
 	FOOD
 };
 
 typedef struct //snack body
 {
-	unsigned int about : 2;  //about: 0-null, 1-snack, 2-food
-	unsigned int dir   : 2;  //direction: 0-up, 1-right, 2-down, 3-left
+	unsigned char about : 2 ;  //about: 0-null, 1-snack, 2-food
+	unsigned char dir   : 2 ;  //direction: 0-up, 1-right, 2-down, 3-left
 }snack_body;
 
 typedef struct //snack head and tail
 {
-	unsigned int x : 4;  //x coordinate
-	unsigned int y : 5;  //y coordinate
+	unsigned int x : 4 ;  //x coordinate
+	unsigned int y : 5 ;  //y coordinate
 }where;
 
 //===========================global variables===================================
-int snack_len;             //length of snack
-char buffer[6144];         //screen buffer
-int last_dir;              //previous direction
-snack_body snack[16][32];  //snack body
+
+FILE  *fp;                 //file pointer for saving game data
+int   last_dir;            //previous direction
+int   snack_len;           //length of snack
+int   food_count;          //food count
 where head, tail;          //snack head and tail
-int loop_count = 0;        //initialize loop count
-int best_score = 0;        //the best score
-FILE * fp;                 //file pointer for saving game data
+char  buffer [6144];       //screen buffer
+int   loop_count = 0;      //initialize loop count
+int   best_score = 0;      //the best score
+snack_body snack [16][32]; //snack body
 
 int main (void)
 {
@@ -83,10 +88,12 @@ int main (void)
 	int shack_state, next_dir;
 	_init: //label for re-initialization
 		init(); //initialize the game
+
 //===========================main game loop===================================
+
 		while(snack_len < 512)  //run until the snack length reaches 512
 		{
-			Sleep(SLEEP_TIME - snack_len * DIFFI);     //sleep for a while
+			Sleep(SLEEP_TIME - snack_len * DIFFI);  //sleep for a while
 
 			process_input:
 				switch(get_dir())   //process the input direction
@@ -143,7 +150,7 @@ int main (void)
 				}
 				redr_screen();
 				//if the snack has eaten food, play a sound
-				if (shack_state == GETED)
+				if (shack_state == DET_FOOD)
 					putchar('\a');
 			loop_count++;
 		}
@@ -156,14 +163,17 @@ int main (void)
 }
 
 //===========================function definitions===================================
+
 void init (void)
 {
-	fputs("\033[?25l\033[2J", stdout);//initialize the console cursor to be invisible and clear the screen
-	loop_count = 0; //initialize the loop count
-	snack_len = 3;  //initialize the length of the snack
-	last_dir = UP;  //initialize the previous direction
-	head.x = 10; head.y = 16; //initialize the head position
-	tail.x = 12; tail.y = 16; //initialize the tail position
+	fputs("\033[?25l\033[2J", stdout);  //initialize the console cursor to be invisible and clear the screen
+
+	loop_count = 0 ;  //initialize the loop count
+	snack_len  = 3 ;  //initialize the length of the snack
+	food_count = 0 ;  //initialize the food count
+	last_dir   = UP;  //initialize the previous direction
+	head.x = 10; head.y = 16;  //initialize the head position
+	tail.x = 12; tail.y = 16;  //initialize the tail position
 
 	//mould a shack
 	for (int i = 0; i < 16; i++)
@@ -194,18 +204,27 @@ void span_food (void)
 {
 	int i = 0;
 	int x, y;
+
 	//spawn food in a random position that is not occupied by the snack or other food
-	do
-	{
-		x = rand() % 16;
-		y = rand() % 32;
-		i++;
-	}
-	while ( (snack[x][y].about == SNACK || snack[x][y].about == FOOD) && i < 1000);
+
+	span_food:  //label for re-spawning food if the position is invalid
+
+		do
+		{
+			x = rand() % 16;
+			y = rand() % 32;
+			i++;
+		}
+		while ( (snack[x][y].about == SNACK || snack[x][y].about == FOOD) && i < 1000);
 	
 	//if the position is valid, place food there
 	if (i < 1000)
 		snack[x][y].about = FOOD;
+		food_count++;
+
+	//if the snack length is less than 512 and there is no food on the screen, spawn food again
+	if (snack_len < 512 && food_count == 0)
+		goto span_food;
 }
 
 char get_dir(void)
@@ -218,7 +237,7 @@ char get_dir(void)
 
 int run (int dir)
 {
-	int ret = WELL;  //return value: 0-well, 1-geted, 4-over
+	int ret = WELL;  //return value: 0-well, 1-DET_FOOD, 4-over
 	last_dir = snack[head.x][head.y].dir = dir;  //update the direction of the head
 	int head_x_sto = head.x;  //store the previous x coordinate of the head
 	int head_y_sto = head.y;  //store the previous y coordinate of the head
@@ -253,10 +272,11 @@ int run (int dir)
 	//check if the snack has eaten food or moved to an empty space
 	if (snack[head.x][head.y].about == FOOD)
 	{
-		snack[head.x][head.y].about = SNACK; //update the position of the head to be occupied by the snack
-		snack_len++;  //increase the length of the snack
-		ret = GETED;  //set the return value to indicate that food has been eaten
-		span_food();  //spawn new food
+		snack[head.x][head.y].about = SNACK;  //update the position of the head to be occupied by the snack
+		snack_len++;     //increase the length of the snack
+		food_count--;    //decrease the food count
+		ret = DET_FOOD;  //set the return value to indicate that food has been eaten
+		span_food();     //spawn new food
 	}
 	//if the snack has moved to an empty space, update the tail position
 	else if (snack[head.x][head.y].about == NULL_)
