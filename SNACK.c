@@ -87,6 +87,9 @@ int main (void)
 	    Sleep(100);
 	
 	int shack_state, next_dir;
+
+	atexit(store_best);  //register the function to store the best score at exit
+	
 	_init: //label for re-initialization
 		init(); //initialize the game
 
@@ -196,8 +199,6 @@ void init (void)
 	}
 	else
 		best_score = 0;                //if the file does not exist, set the best score to 0
-
-	atexit(store_best);  //register the function to store the best score at exit
 
 	//redraw the screen
 	redr_screen();
