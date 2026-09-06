@@ -20,6 +20,7 @@ int  run         (int dir)  ;    //run one frame
 int  opp_dir     (int dir)  ;    //get the opposite direction of snack
 void redr_screen (void)     ;    //redraw screen
 int  cont_play   (void)     ;    //continue playing ?
+void store_best  (void)     ;    //store the best score
 
 //===========================type definitions===================================
 
@@ -195,6 +196,8 @@ void init (void)
 	}
 	else
 		best_score = 0;                //if the file does not exist, set the best score to 0
+
+	atexit(store_best);  //register the function to store the best score at exit
 
 	//redraw the screen
 	redr_screen();
@@ -454,4 +457,19 @@ int cont_play (void)
 	while (!kbhit())
 	    Sleep(100);
 	return 0;
+}
+
+void store_best (void)
+{
+	//if the current snack length is greater than the best score, update the best score and save it to a file
+	if (snack_len > best_score)
+	{
+		best_score = snack_len;            //update the best score
+		fp = fopen("snack.dat", "w");      //open the file for writing
+		if (fp != NULL)
+		{
+			fprintf(fp, "%d", best_score); //write the best score to the file
+			fclose(fp);                    //close the file
+		}
+	}
 }
