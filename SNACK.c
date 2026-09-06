@@ -194,7 +194,10 @@ void init (void)
 	fp = fopen("snack.dat", "r");      //open the file for reading
 	if (fp != NULL)
 	{
-		fscanf(fp, "%d", &best_score); //read the best score from the file
+		if (fscanf(fp, "%d", &best_score) != 1)
+		{
+			best_score = 0;
+		}
 		fclose(fp);                    //close the file
 	}
 	else
